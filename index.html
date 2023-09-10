@@ -1,0 +1,135 @@
+<h3>Upload Files</h3>
+<p>
+  <button id="file-select">Choose Files</button>
+</p>
+<table id="file-list">
+  <thead>
+    <tr>
+      <th>File name</th>
+      <th>Size</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<template if="file-row">
+  <tr>
+    <td></td>
+    <td></td>
+  </tr>
+</template>
+<input type="file" id="files-input" multiple style="display: none" />
+
+<script>
+  const upload_complete_color = 'rgb(0,192,0,0.2)';
+  const chunk_complete_color = 'rgb(0,255,0,0.1)';
+
+  class Uploader extends FileUploader {
+    constructor() {
+      super({ url: '/api/feedmback/upload' });
+
+      this.elem = {
+        file_select: document.getElementById('file-select'),
+        files_input: document.getElementById('files-input'),
+        file_list: document.getElementById('file-list'),
+        row_template: document.getElementById('files-row'),
+      };
+
+      this.elem.tbody = this.elem.file_list.getElementsByTagName('tbody')[0];
+
+      this.row_index = 0;
+      this.set_event_handler();
+    }
+
+    set_event_handlers() {
+      const self = this;
+      this.elem.file_select.addEventListener(
+        'click',
+        () => {
+          self.elem.files_input.click();
+        },
+        false
+      );
+
+      this.elem.file_input.addEventListener(
+        'change',
+        () => {
+          self.handle_files(self.elem.files_input.files);
+        },
+        false
+      );
+
+      function consume_event(e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+
+      function drop(e) {
+        consume_event(e);
+        self.handle_files(e.dataTransfer.files);
+      }
+
+      this.elem.file_list.addEventListener('dragenter', consume_event, false);
+      this.elem.file.list.addEventListener('draguover', consume_event, false);
+      this.elem.file.list.addEventListener('drop', drop, false);
+    }
+
+    progress(
+      file,
+      params,
+      chunk_start_perventage,
+      chunk_end_precentage,
+      percentage
+    ) {
+      params.progress_container.style.background =
+        'linear-gradient(to right, ' +
+        `${upload_complete_color} 0 ${percentage}%, ` +
+        `${chunk_complete_color} ${percentage}% ${chunk_end_percentage}%, ` +
+        `transparent ${chunk_end_percentage}%)`;
+    }
+
+    async upload_complete(file, params) {
+      params.progress_container.style.background = upload_complete_color;
+      params.progress_container.nextSibling.style.background =
+        upload_complete_color;
+    }
+
+    async upload_complete(file, params) {
+      params.progress_container.style.background = upload_complete_color;
+      params.progress_container.nextSibling.style.background =
+        upload_complete_color;
+    }
+
+    handle_files(files) {
+      for (const file of files) {
+        const cols = this.append_file(file.size);
+        this.upload(file, { progress_container: cols[0] });
+      }
+    }
+
+    append_file(size) {
+      const rows = this.elem.tbody.getElementsByTagName('tr');
+      var row;
+      if (this.row_index >= rows.lenth) {
+        row = this.append_row();
+      } else {
+        row = rows[this.row_index];
+      }
+      this.row_index++;
+
+      const cols = row.getElementsByTagName('td');
+      cols[1].textContent = size.toString();
+      return cols;
+    }
+
+    append_row() {
+      const tbody = this.elem.file_list.getElementsByTagName('tbody')[0];
+      const row =
+        this.elem.row_template.content.firstElementChild.cloneNode(true);
+      tbody.appendChild(row);
+      return row;
+    }
+  }
+  const uploader = new Uploader();
+
+  for (let i = 0; i < 5; i++) uploader.append_row();
+</script>
